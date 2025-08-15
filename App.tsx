@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const GLASS_HEIGHT = SCREEN_H * 0.45;
@@ -536,27 +537,35 @@ export default function App(): JSX.Element {
             <Text style={styles.chatTitle}>AI Assistant</Text>
           </View>
 
-          {/* Messages list */}
-          <FlatList
-            ref={listRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.messagesContainer}
-            renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.messageBubble,
-                  item.sender === 'user' ? styles.userBubble : styles.aiBubble,
-                ]}
-              >
-                <Text style={styles.messageText}>{item.text}</Text>
-              </View>
-            )}
-            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-          />
+          {/* Messages area with keyboard aware input */}
+          <KeyboardAwareScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
+            enableOnAndroid={true}
+            enableAutomaticScroll={Platform.OS === 'ios'}
+            extraScrollHeight={20}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Messages list */}
+            <FlatList
+              ref={listRef}
+              data={messages}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.messagesContainer}
+              renderItem={({ item }) => (
+                <View
+                  style={[
+                    styles.messageBubble,
+                    item.sender === 'user' ? styles.userBubble : styles.aiBubble,
+                  ]}
+                >
+                  <Text style={styles.messageText}>{item.text}</Text>
+                </View>
+              )}
+              onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            />
 
-          {/* Input row (fixed at bottom of panel) */}
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            {/* Input row at bottom of KeyboardAwareScrollView */}
             <View style={styles.inputBar}>
               <TextInput
                 value={chatInput}
@@ -570,7 +579,7 @@ export default function App(): JSX.Element {
                 <Text style={styles.sendText}>Send</Text>
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
         </Animated.View>
       </View>
     </SafeAreaView>
@@ -699,7 +708,7 @@ const styles = StyleSheet.create({
 
   messagesContainer: {
     padding: 14,
-    flex: 1, 
+    flexGrow: 1, 
   },
   messageBubble: {
     padding: 10,
@@ -720,17 +729,14 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 14, color: '#231a00' },
 
   inputBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
     paddingHorizontal: 12,
-    paddingVertical: 60,
+    paddingVertical: 12,
     backgroundColor: '#FFF7DB',
     borderTopWidth: 1,
     borderTopColor: '#f6dda0',
     flexDirection: 'row',
     alignItems: 'flex-end',
+    marginTop: 10,
   },
   chatInput: {
     flex: 1,
